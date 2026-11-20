@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Панель таймера</title>
+    <style>
+        body { font-family: monospace; text-align: center; padding-top: 100px; }
+        #timer { font-size: 100px; font-weight: bold; }
+        #label { font-size: 20px; color: gray; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div id="timer">00:00</div>
+    <div id="label">Ожидание</div>
+
+    <script>
+        const ws = new WebSocket('ws://' + window.location.host + '/ws/timer/');
+        let endTime = 0;
+        let isRunning = false;
+
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.action === 'start' || (data.action === 'sync' && data.running)) {
+                endTime = data.end_time;
+                isRunning = true;
+            } else {
+                isRunning = false;
+            }
+        };
+
+        setInterval(() => {
+            const timerEl = document.getElementById('timer');
+            const labelEl = document.getElementById('label');
+
+            if (!isRunning) {
+                timerEl.innerText = '00:00';
+                labelEl.innerText = 'Готово';
+                return;
+            }
+
+            const left = endTime - Date.now();
+
+            if (left > 0) {
+                const totalSec = Math.ceil(left / 1000);
+                const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+                const s = String(totalSec % 60).padStart(2, '0');
+                timerEl.innerText = `${m}:${s}`;
+                labelEl.innerText = 'Идет отсчет';
+            } else {
+                timerEl.innerText = '00:00';
+                labelEl.innerText = 'Время вышло';
+                isRunning = false;
+            }
+        }, 100);
+    </script>
+</body>
+</html>

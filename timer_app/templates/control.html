@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Пульт</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input { width: 60px; padding: 5px; }
+        button { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
+        #status { margin-top: 15px; color: gray; }
+    </style>
+</head>
+<body>
+    <h2>Пульт управления</h2>
+    <div>
+        <input type="number" id="min" value="1" min="0"> мин. 
+        <input type="number" id="sec" value="0" min="0" max="59"> сек.
+    </div>
+    <button id="startBtn">Старт</button>
+    <button id="stopBtn">Стоп</button>
+    <p><a href="/panel/" target="_blank">Открыть панель</a></p>
+    <div id="status">Подключение</div>
+
+    <script>
+        const ws = new WebSocket('ws://' + window.location.host + '/ws/timer/');
+        const statusEl = document.getElementById('status');
+
+        ws.onopen = () => statusEl.innerText = 'Сервер подключен';
+        ws.onclose = () => statusEl.innerText = 'Сервер отключен';
+
+        document.getElementById('startBtn').onclick = () => {
+            const m = Number(document.getElementById('min').value);
+            const s = Number(document.getElementById('sec').value);
+            const duration = (m * 60 + s) * 1000;
+            if (duration > 0) {
+                ws.send(JSON.stringify({ action: 'start', duration: duration }));
+                statusEl.innerText = 'Таймер запущен';
+            }
+        };
+
+        document.getElementById('stopBtn').onclick = () => {
+            ws.send(JSON.stringify({ action: 'stop' }));
+            statusEl.innerText = 'Таймер остановлен';
+        };
+    </script>
+</body>
+</html>
